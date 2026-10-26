@@ -3,6 +3,12 @@ import html
 import streamlit as st
 from transformers import pipeline
 
+SUMMARY_INSTRUCTIONS = (
+    "You write very short summaries. State only the main point of the text in your own words. "
+    "Do not go through the text sentence by sentence and leave out minor details, numbers and names "
+    "unless they are essential."
+)
+
 st.set_page_config(page_title="NLP Toolkit", page_icon="🧠", layout="centered")
 
 st.markdown(
@@ -73,8 +79,12 @@ if st.button("Run"):
                     unsafe_allow_html=True,
                 )
             elif task == "Summarization":
-                messages = [{"role": "user", "content": f"Summarize the following text in two or three sentences:\n\n{text}"}]
-                summary = nlp(messages, max_new_tokens=120, do_sample=False)[0]["generated_text"][-1]["content"]
+                limit = max(15, min(50, len(text.split()) // 4))
+                messages = [
+                    {"role": "system", "content": SUMMARY_INSTRUCTIONS},
+                    {"role": "user", "content": f"Summarize this text in one or two sentences, at most {limit} words:\n\n{text}"},
+                ]
+                summary = nlp(messages, max_new_tokens=80, do_sample=False)[0]["generated_text"][-1]["content"]
                 st.markdown(
                     f"""<div class="result-card">{html.escape(summary)}</div>""",
                     unsafe_allow_html=True,
