@@ -1,3 +1,5 @@
+import html
+
 import streamlit as st
 from transformers import pipeline
 
@@ -50,9 +52,10 @@ def load_pipeline(task_name):
     if task_name == "Sentiment Analysis":
         return pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
     if task_name == "Summarization":
-        return pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
+        # transformers v5 removed the summarization pipeline; its migration guide recommends a chat model
+        return pipeline("text-generation", model="Qwen/Qwen2.5-0.5B-Instruct")
     if task_name == "Named Entity Recognition":
-        return pipeline("ner", model="dslim/bert-base-NER", grouped_entities=True)
+        return pipeline("ner", model="dslim/bert-base-NER", aggregation_strategy="simple")
 
 if st.button("Run"):
     if not text.strip():
@@ -70,10 +73,10 @@ if st.button("Run"):
                     unsafe_allow_html=True,
                 )
             elif task == "Summarization":
-                max_len = min(130, max(30, len(text.split()) // 2))
-                result = nlp(text, max_length=max_len, min_length=10, do_sample=False)[0]
+                messages = [{"role": "user", "content": f"Summarize the following text in two or three sentences:\n\n{text}"}]
+                summary = nlp(messages, max_new_tokens=120, do_sample=False)[0]["generated_text"][-1]["content"]
                 st.markdown(
-                    f"""<div class="result-card">{result['summary_text']}</div>""",
+                    f"""<div class="result-card">{html.escape(summary)}</div>""",
                     unsafe_allow_html=True,
                 )
             elif task == "Named Entity Recognition":
@@ -82,7 +85,7 @@ if st.button("Run"):
                     st.markdown('<div class="result-card">No entities found.</div>', unsafe_allow_html=True)
                 else:
                     rows = "".join(
-                        f"<tr><td>{e['word']}</td><td>{e['entity_group']}</td><td>{e['score']:.2%}</td></tr>"
+                        f"<tr><td>{html.escape(e['word'])}</td><td>{e['entity_group']}</td><td>{e['score']:.2%}</td></tr>"
                         for e in entities
                     )
                     st.markdown(
