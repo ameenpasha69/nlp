@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    uses: huggingface/doc-builder/.github/workflows/upload_pr_documentation.yml@9fc8a41d7729c424fdb2192f2f85ff63102ec9a3  # main
+    uses: huggingface/doc-builder/.github/workflows/upload_pr_documentation.yml@a05dda3deaa1a624fb5f20b035e5b1f43a831315  # main
     with:
       package_name: transformers
     secrets:
